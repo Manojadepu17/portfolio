@@ -22,9 +22,21 @@ const corsOptions = {
                 callback(new Error('Not allowed by CORS'));
             }
         } else {
-            // In production, use specific FRONTEND_URL
-            const allowedOrigins = [process.env.FRONTEND_URL || 'https://your-domain.com'];
-            if (allowedOrigins.includes(origin)) {
+            // In production, allow Vercel domains and custom domains
+            const allowedOrigins = [
+                process.env.FRONTEND_URL,
+                /\.vercel\.app$/  // Allow all Vercel preview URLs
+            ];
+            
+            // Allow same-origin requests (when frontend and backend are on same domain)
+            if (!origin) {
+                callback(null, true);
+            } else if (allowedOrigins.some(allowed => {
+                if (allowed instanceof RegExp) {
+                    return allowed.test(origin);
+                }
+                return allowed === origin;
+            })) {
                 callback(null, true);
             } else {
                 callback(new Error('Not allowed by CORS'));
@@ -103,17 +115,20 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`\n${'='.repeat(60)}`);
-    console.log(`🚀 Portfolio Backend Server Running`);
-    console.log(`${'='.repeat(60)}`);
-    console.log(`📡 Server: http://localhost:${port}`);
-    console.log(`📧 Contact API: POST http://localhost:${port}/api/contact/send`);
-    console.log(`💚 Health Check: GET http://localhost:${port}/api/health`);
-    console.log(`🌍 Environment: ${nodeEnv}`);
-    console.log(`📦 Database: ${mongoUri.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas'}`);
-    console.log(`${'='.repeat(60)}\n`);
-});
+// Start server (only in local development, not in serverless)
+if (process.env.VERCEL !== '1') {
+    app.listen(port, () => {
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`🚀 Portfolio Backend Server Running`);
+        console.log(`${'='.repeat(60)}`);
+        console.log(`📡 Server: http://localhost:${port}`);
+        console.log(`📧 Contact API: POST http://localhost:${port}/api/contact/send`);
+        console.log(`💚 Health Check: GET http://localhost:${port}/api/health`);
+        console.log(`🌍 Environment: ${nodeEnv}`);
+        console.log(`📦 Database: ${mongoUri.includes('localhost') ? 'Local MongoDB' : 'MongoDB Atlas'}`);
+        console.log(`${'='.repeat(60)}\n`);
+    });
+}
 
+// Export for Vercel serverless
 module.exports = app;

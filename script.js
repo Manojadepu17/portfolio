@@ -243,11 +243,11 @@ window.addEventListener('keydown', function(event) {
 // ============ API Configuration ============
 /**
  * API endpoint for contact form
- * Change this to your deployed backend URL in production
+ * When deployed on Vercel, frontend and backend are on the same domain
  */
 const API_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000' 
-    : 'https://your-deployed-backend-url.com';
+    : window.location.origin; // Uses same domain as frontend
 const CONTACT_API = `${API_URL}/api/contact/send`;
 
 // ============ Contact Form Submission ============
